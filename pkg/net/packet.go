@@ -8,14 +8,15 @@ import (
 const (
 	minimumPacketSize int32 = 10
 	maximumPacketSize int32 = 4096
+
+	serverDataResponseValue PacketType = 0
+	serverDataExecCommand   PacketType = 2
+	serverDataAuthResponse  PacketType = 2
+	serverDataAuth          PacketType = 3
 )
 
 // PacketType indicates the purpose of the packet.
 type PacketType int32
-
-const (
-	serverDataResponseValue PacketType = 0
-)
 
 // Packet is the payload that both requests and responses
 // are sent as TCP packets.
