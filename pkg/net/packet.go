@@ -10,12 +10,19 @@ const (
 	maximumPacketSize int32 = 4096
 )
 
+// PacketType indicates the purpose of the packet.
+type PacketType int32
+
+const (
+	serverDataResponseValue PacketType = 0
+)
+
 // Packet is the payload that both requests and responses
 // are sent as TCP packets.
 type Packet struct {
 	Size int32
 	ID   int32
-	Type int32
+	Type PacketType
 	Body string
 }
 
