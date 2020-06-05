@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
 )
@@ -41,6 +42,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
+	log.Printf("Connection initialized for %s", r.options.url())
 	// first check if is not authenticated and connection options
 	// contains a password to try to authenticate the connection to
 	// the server.
@@ -50,6 +52,18 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
+	log.Println("Connection to server is authenticated")
+	// we send the given command but first we create a packet to
+	// be sent.
+	packet := NewPacket()
+	packet.Type = serverDataExecCommand
+	packet.Body = cmd
+
+	err := r.send(packet)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Command %s sent to the server", cmd)
 	return nil, nil
 }
 
@@ -77,12 +91,21 @@ func (r *RemoteConnection) authenticate() error {
 	authPacket := NewPacket()
 	authPacket.Type = serverDataAuth
 	authPacket.Body = r.options.Password
+	return r.send(authPacket)
+}
 
-	err := authPacket.Validate()
+// send the given packge after validate it. Note that
+// this packet is serialized into a byte array and
+// sent using the given connection.
+func (r *RemoteConnection) send(packet *Packet) error {
+	err := packet.Validate()
 	if err != nil {
 		return err
 	}
-	content, err := authPacket.Serialize()
+	content, err := packet.Serialize()
+	if err != nil {
+		return err
+	}
 	_, err = r.connection.Write(content)
 	return err
 }
