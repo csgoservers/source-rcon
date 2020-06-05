@@ -8,12 +8,12 @@ import (
 
 func main() {
 	opts := rcon.Options{
-		Host: "yybg.counter.monster",
-		Port: 27015,
+		Host: "127.0.0.1",
+		Port: 27025,
 	}
 	conn := rcon.New(&opts)
 	defer conn.Close()
 
-	_, err := conn.ExecCommand("stats")
+	_, err := conn.ExecCommand("echo hello")
 	log.Println(err)
 }

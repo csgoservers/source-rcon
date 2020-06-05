@@ -42,7 +42,6 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	log.Printf("Connection initialized for %s", r.options.url())
 	// first check if is not authenticated and connection options
 	// contains a password to try to authenticate the connection to
 	// the server.
@@ -52,7 +51,6 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	log.Println("Connection to server is authenticated")
 	// we send the given command but first we create a packet to
 	// be sent.
 	packet := NewPacket()
@@ -68,10 +66,14 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 }
 
 // Close closes the server connection
-func (r *RemoteConnection) Close() {
-	r.connection.Close()
+func (r *RemoteConnection) Close() error {
+	err := r.connection.Close()
+	if err != nil {
+		return err
+	}
 	r.authenticated = false
 	r.connection = nil
+	return nil
 }
 
 // initialize is the method to setup connection with the server
@@ -83,6 +85,7 @@ func (r *RemoteConnection) initialize() error {
 	}
 	conn.SetDeadline(r.options.Timeout)
 	r.connection = conn
+	log.Printf("Connection initialized for %s", r.options.url())
 	return nil
 }
 
@@ -91,7 +94,8 @@ func (r *RemoteConnection) authenticate() error {
 	authPacket := NewPacket()
 	authPacket.Type = serverDataAuth
 	authPacket.Body = r.options.Password
-	return r.send(authPacket)
+	err := r.send(authPacket)
+	return err
 }
 
 // send the given packge after validate it. Note that
