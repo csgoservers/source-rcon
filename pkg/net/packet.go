@@ -50,7 +50,7 @@ func (p *Packet) Validate() error {
 
 // String return the packet representation
 func (p *Packet) String() string {
-	return fmt.Sprintf("%08x %08x %08x %v", p.Size(), p.ID, p.Type, []byte(p.Body))
+	return fmt.Sprintf("%02x %02x %02x %v", p.Size(), p.ID, p.Type, []byte(p.Body))
 }
 
 // Serialize transforms the packet to a byte array to be sent to the
@@ -60,10 +60,11 @@ func (p *Packet) Serialize() ([]byte, error) {
 	binary.Write(raw, binary.LittleEndian, p.Size())
 	binary.Write(raw, binary.LittleEndian, p.ID)
 	binary.Write(raw, binary.LittleEndian, p.Type)
-	binary.Write(raw, binary.LittleEndian, []byte(p.Body))
-	// body payload must be null terminated.
-	binary.Write(raw, binary.LittleEndian, "\x00")
-	binary.Write(raw, binary.LittleEndian, "\x00")
+
+	raw.WriteString(p.Body)
+	raw.WriteByte(0) // body payload must be null terminated.
+	raw.WriteByte(0)
+
 	return raw.Bytes(), nil
 }
 

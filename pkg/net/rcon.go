@@ -1,6 +1,7 @@
 package net
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -62,6 +63,11 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 		return nil, err
 	}
 	log.Printf("Command %s sent to the server", cmd)
+
+	err = r.receive()
+	if err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
@@ -110,6 +116,25 @@ func (r *RemoteConnection) send(packet *Packet) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Sent packet: %v", content)
 	_, err = r.connection.Write(content)
 	return err
+}
+
+// receive the responses from the server or an error.
+func (r *RemoteConnection) receive() error {
+	for {
+		reader := bufio.NewReader(r.connection)
+		size, err := reader.ReadByte()
+		if err != nil {
+			return nil
+		}
+
+		chunk := make([]byte, int(size))
+		_, err = reader.Read(chunk)
+		if err != nil {
+			return err
+		}
+		log.Printf("Data: %v", chunk)
+	}
 }
