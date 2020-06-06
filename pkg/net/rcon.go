@@ -2,13 +2,19 @@ package net
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"time"
 )
 
-const defaultRCONPort int = 27015
+const authFailedID int32 = -1
+
+var (
+	errorPacketIDNotMatch = errors.New("packet ID doesn't match for authentication")
+	errorAuthFailed       = errors.New("authentication failed")
+)
 
 // Options for the remote connection to be stablished
 type Options struct {
@@ -94,12 +100,40 @@ func (r *RemoteConnection) initialize() error {
 }
 
 // authenticate is used to authenticate the connection with the server.
+// When the server receives an auth request, it will respond with an empty
+// response followed immediately by a server data auth response indicating
+// if the authentication succeeded or failed. Note that the status code
+// is returned in the packet id field. If the ID is equals to -1 then the
+// authentication failed.
 func (r *RemoteConnection) authenticate() error {
 	authPacket := NewPacket()
 	authPacket.Type = serverDataAuth
 	authPacket.Body = r.options.Password
 	err := r.send(authPacket)
-	return err
+
+	// here we expect an empty response form the server. ID from
+	// auth request packet mus be the same that this first one.
+	result, err := r.receive()
+	if err != nil {
+		return err
+	}
+	if authPacket.ID != result.ID {
+		return errorPacketIDNotMatch
+	}
+	// this second packet receives the actual result of the authentication
+	// process. ID must be the same as the original auth packet. If packet
+	// ID is -1 then authentication failed.
+	result, err = r.receive()
+	if err != nil {
+		return err
+	}
+	if result.ID == authFailedID {
+		return errorAuthFailed
+	}
+	if authPacket.ID != result.ID {
+		return errorPacketIDNotMatch
+	}
+	return nil
 }
 
 // send the given packge after validate it. Note that
