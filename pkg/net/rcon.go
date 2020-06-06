@@ -62,12 +62,11 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Command %s sent to the server", cmd)
-
-	err = r.receive()
+	result, err := r.receive()
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Received packet: %s", result.String())
 	return nil, nil
 }
 
@@ -91,7 +90,6 @@ func (r *RemoteConnection) initialize() error {
 	}
 	conn.SetDeadline(r.options.Timeout)
 	r.connection = conn
-	log.Printf("Connection initialized for %s", r.options.url())
 	return nil
 }
 
@@ -116,25 +114,22 @@ func (r *RemoteConnection) send(packet *Packet) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Sent packet: %v", content)
+	log.Printf("Sent packet: %v", packet.String())
 	_, err = r.connection.Write(content)
 	return err
 }
 
 // receive the responses from the server or an error.
-func (r *RemoteConnection) receive() error {
+func (r *RemoteConnection) receive() (*Packet, error) {
+	reader := bufio.NewReader(r.connection)
 	for {
-		reader := bufio.NewReader(r.connection)
-		size, err := reader.ReadByte()
+		chunk := make([]byte, maximumPacketSize)
+		num, err := reader.Read(chunk)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-
-		chunk := make([]byte, int(size))
-		_, err = reader.Read(chunk)
-		if err != nil {
-			return err
-		}
-		log.Printf("Data: %v", chunk)
+		packet := Packet{}
+		packet.Deserialize(chunk[:num])
+		return &packet, nil
 	}
 }
