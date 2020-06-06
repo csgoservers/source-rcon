@@ -7,13 +7,13 @@ import (
 )
 
 func TestPacketBodyNotValid(t *testing.T) {
-	packet := NewPacket()
+	packet := Packet{}
 	err := packet.Validate()
 	assert.Error(t, err)
 }
 
 func TestPacketSizeGreaterThanAllowed(t *testing.T) {
-	packet := NewPacket()
+	packet := Packet{}
 	b := make([]byte, 4087)
 	for i := range b {
 		b[i] = 'a'
@@ -24,7 +24,7 @@ func TestPacketSizeGreaterThanAllowed(t *testing.T) {
 }
 
 func TestDefaultPacketSize(t *testing.T) {
-	packet := NewPacket()
+	packet := Packet{}
 	raw, err := packet.Serialize()
 	assert.Nil(t, err)
 	assert.NotNil(t, raw)
@@ -33,9 +33,7 @@ func TestDefaultPacketSize(t *testing.T) {
 }
 
 func TestSerializePacket(t *testing.T) {
-	packet := NewPacket()
-	packet.Type = serverDataAuth
-	packet.Body = "aaaa"
+	packet := NewPacket(serverDataAuth, "aaaa")
 
 	raw, err := packet.Serialize()
 	assert.NoError(t, packet.Validate())
@@ -46,16 +44,14 @@ func TestSerializePacket(t *testing.T) {
 }
 
 func TestDeserializePacket(t *testing.T) {
-	p1 := NewPacket()
-	p1.Type = serverDataAuth
-	p1.Body = "aaaa"
+	p1 := NewPacket(serverDataAuth, "aaaa")
 
 	raw, err := p1.Serialize()
 	assert.NoError(t, p1.Validate())
 	assert.Nil(t, err)
 	assert.NotNil(t, raw)
 
-	p2 := NewPacket()
+	p2 := Packet{}
 	err = p2.Deserialize(raw)
 	assert.NoError(t, err)
 	assert.Equal(t, "aaaa", p2.Body)

@@ -31,8 +31,12 @@ type Packet struct {
 }
 
 // NewPacket creates a default packet
-func NewPacket() *Packet {
-	return &Packet{ID: rand.Int31()}
+func NewPacket(t PacketType, body string) *Packet {
+	return &Packet{
+		ID:   rand.Int31(),
+		Type: t,
+		Body: body,
+	}
 }
 
 // Validate validates that the packet size is the expected one.

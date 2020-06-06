@@ -60,10 +60,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	}
 	// we send the given command but first we create a packet to
 	// be sent.
-	packet := NewPacket()
-	packet.Type = serverDataExecCommand
-	packet.Body = cmd
-
+	packet := NewPacket(serverDataExecCommand, cmd)
 	err := r.send(packet)
 	if err != nil {
 		return nil, err
@@ -106,9 +103,7 @@ func (r *RemoteConnection) initialize() error {
 // is returned in the packet id field. If the ID is equals to -1 then the
 // authentication failed.
 func (r *RemoteConnection) authenticate() error {
-	authPacket := NewPacket()
-	authPacket.Type = serverDataAuth
-	authPacket.Body = r.options.Password
+	authPacket := NewPacket(serverDataAuth, r.options.Password)
 	err := r.send(authPacket)
 
 	// here we expect an empty response form the server. ID from
