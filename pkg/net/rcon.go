@@ -133,6 +133,7 @@ func (r *RemoteConnection) authenticate() error {
 	if authPacket.ID != result.ID {
 		return errorPacketIDNotMatch
 	}
+	r.authenticated = true
 	return nil
 }
 
