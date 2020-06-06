@@ -28,7 +28,7 @@ func TestDefaultPacketSize(t *testing.T) {
 	raw, err := packet.Serialize()
 	assert.Nil(t, err)
 	assert.NotNil(t, raw)
-	assert.Equal(t, 12, len(raw)) // 10 packet + 1 size header + 1 empty string termination
+	assert.Equal(t, 14, len(raw)) // 10 packet + 1 size header + 1 empty string termination
 	assert.Equal(t, int32(10), packet.Size())
 }
 
@@ -40,7 +40,7 @@ func TestSerializePacket(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, raw)
 	assert.Equal(t, int32(14), packet.Size())
-	assert.Equal(t, 16, len(raw))
+	assert.Equal(t, 18, len(raw))
 }
 
 func TestDeserializePacket(t *testing.T) {

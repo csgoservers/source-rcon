@@ -65,6 +65,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// receive response from server
 	result, err := r.receive()
 	if err != nil {
 		return nil, err
@@ -149,7 +150,9 @@ func (r *RemoteConnection) send(packet *Packet) error {
 	return err
 }
 
-// receive the responses from the server or an error.
+// receive the responses from the server or an error. Returned
+// packet contains the data to be able to correlate the ID with
+// the originally sent packet.
 func (r *RemoteConnection) receive() (*Packet, error) {
 	reader := bufio.NewReader(r.connection)
 	for {
