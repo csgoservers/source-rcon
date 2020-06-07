@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	rcon "github.com/csgoservers/source-rcon/pkg/net"
+	rcon "github.com/csgoservers/source-rcon/pkg/protocol"
 )
 
 func main() {
