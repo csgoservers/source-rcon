@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	rcon "github.com/csgoservers/source-rcon/pkg/net"
@@ -15,6 +16,10 @@ func main() {
 	conn := rcon.New(&opts)
 	defer conn.Close()
 
-	_, err := conn.ExecCommand("echo hello")
-	log.Println(err)
+	result, err := conn.ExecCommand("echo hello")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	log.Println(string(result))
 }

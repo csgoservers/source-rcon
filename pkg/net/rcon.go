@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -70,8 +71,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Received packet: %s", result.String())
-	return nil, nil
+	return []byte(strings.TrimSpace(result.Body)), nil
 }
 
 // Close closes the server connection
