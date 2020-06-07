@@ -9,12 +9,13 @@ import (
 func TestPacketBodyNotValid(t *testing.T) {
 	packet := Packet{}
 	err := packet.Validate()
-	assert.Error(t, err)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(10), packet.Size())
 }
 
 func TestPacketSizeGreaterThanAllowed(t *testing.T) {
 	packet := Packet{}
-	b := make([]byte, 4087)
+	b := make([]byte, 4097)
 	for i := range b {
 		b[i] = 'a'
 	}

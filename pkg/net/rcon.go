@@ -2,11 +2,10 @@ package net
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -66,12 +65,34 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	// receive response from server
-	result, err := r.receive()
+	// In order to support multiple packet responses for large packets
+	// we use a workaround described in the official protocol documentation.
+	// https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses
+	mirrorPacket := NewPacket(serverDataResponseValue, "")
+	err = r.send(mirrorPacket)
 	if err != nil {
 		return nil, err
 	}
-	return []byte(strings.TrimSpace(result.Body)), nil
+
+	// receive response from server. We iterate over the received
+	// data to search for the mirror packet (empty). If found, then
+	// we break the loop and return the result.
+	var raw bytes.Buffer
+	for {
+		result, err := r.receive()
+		if err != nil {
+			return nil, err
+		}
+		//log.Printf("result: %v", []byte(result.Body))
+		// received mirror packet, return raw bytes.
+		packet := r.transform(result)
+		if mirrorPacket.ID == packet.ID {
+			return raw.Bytes(), nil
+		}
+		// here we append packet bodies because mirror
+		// packet is not received at this moment.
+		raw.Write(bytes.TrimSpace(result))
+	}
 }
 
 // Close closes the server connection
@@ -113,7 +134,8 @@ func (r *RemoteConnection) authenticate() error {
 	if err != nil {
 		return err
 	}
-	if authPacket.ID != result.ID {
+	packet := r.transform(result)
+	if authPacket.ID != packet.ID {
 		return errorPacketIDNotMatch
 	}
 	// this second packet receives the actual result of the authentication
@@ -123,10 +145,11 @@ func (r *RemoteConnection) authenticate() error {
 	if err != nil {
 		return err
 	}
-	if result.ID == authFailedID {
+	packet = r.transform(result)
+	if packet.ID == authFailedID {
 		return errorAuthFailed
 	}
-	if authPacket.ID != result.ID {
+	if authPacket.ID != packet.ID {
 		return errorPacketIDNotMatch
 	}
 	r.authenticated = true
@@ -145,7 +168,6 @@ func (r *RemoteConnection) send(packet *Packet) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Sent packet: %v", packet.String())
 	_, err = r.connection.Write(content)
 	return err
 }
@@ -153,7 +175,7 @@ func (r *RemoteConnection) send(packet *Packet) error {
 // receive the responses from the server or an error. Returned
 // packet contains the data to be able to correlate the ID with
 // the originally sent packet.
-func (r *RemoteConnection) receive() (*Packet, error) {
+func (r *RemoteConnection) receive() ([]byte, error) {
 	reader := bufio.NewReader(r.connection)
 	for {
 		chunk := make([]byte, maximumPacketSize)
@@ -161,8 +183,12 @@ func (r *RemoteConnection) receive() (*Packet, error) {
 		if err != nil {
 			return nil, err
 		}
-		packet := Packet{}
-		packet.Deserialize(chunk[:num])
-		return &packet, nil
+		return chunk[:num], nil
 	}
+}
+
+func (r *RemoteConnection) transform(data []byte) *Packet {
+	packet := Packet{}
+	packet.Deserialize(data)
+	return &packet
 }

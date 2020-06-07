@@ -3,7 +3,6 @@ package net
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -11,7 +10,7 @@ import (
 
 const (
 	minimumPacketSize int32 = 10
-	maximumPacketSize int32 = 4096
+	maximumPacketSize int32 = 4096 + 10
 
 	serverDataResponseValue PacketType = 0
 	serverDataExecCommand   PacketType = 2
@@ -43,9 +42,6 @@ func NewPacket(t PacketType, body string) *Packet {
 // The minimum posible value for packet `Size` is 10 bytes
 // and the maximum one is 4096.
 func (p *Packet) Validate() error {
-	if len(p.Body) == 0 {
-		return errors.New("packet body is empty")
-	}
 	if p.Size() > maximumPacketSize {
 		return fmt.Errorf("packet size is > %d", maximumPacketSize)
 	}
@@ -89,10 +85,18 @@ func (p *Packet) Deserialize(payload []byte) error {
 	binary.Read(data, binary.LittleEndian, &size)
 	binary.Read(data, binary.LittleEndian, &p.ID)
 	binary.Read(data, binary.LittleEndian, &p.Type)
+	// no data to read, return ok
+	if size == 0 {
+		p.Body = ""
+		return nil
+	}
 	// read body data
-	bodySize := size - minimumPacketSize
-	bodyData := make([]byte, bodySize)
+	bodyData := make([]byte, size-minimumPacketSize)
 	_, err := io.ReadFull(data, bodyData)
+	if err == io.EOF {
+		p.Body = ""
+		return nil
+	}
 	if err != nil {
 		return err
 	}
