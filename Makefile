@@ -4,8 +4,8 @@ VERSION := $(shell git rev-parse --short HEAD)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 build:
-	go build -ldflags "-X pkg.Version=$(VERSION) -X pkg.Branch=$(BRANCH)" \
-	-o rcon-cli
+	go build -ldflags "-X cmd.Version=$(VERSION) -X cmd.Branch=$(BRANCH)" \
+	-o rcon-cli ./cmd
 	
 test:
 	go test -v ./pkg/...
