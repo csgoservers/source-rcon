@@ -79,13 +79,11 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	// we break the loop and return the result.
 	var raw bytes.Buffer
 	for {
-		result, err := r.receive()
+		packet, err = r.receive()
 		if err != nil {
 			return nil, err
 		}
-		//log.Printf("result: %v", []byte(result.Body))
 		// received mirror packet, return raw bytes.
-		packet := r.transform(result)
 		if mirrorPacket.ID == packet.ID {
 			return raw.Bytes(), nil
 		}
@@ -135,8 +133,7 @@ func (r *RemoteConnection) authenticate() error {
 	if err != nil {
 		return err
 	}
-	packet := r.transform(result)
-	if authPacket.ID != packet.ID {
+	if authPacket.ID != result.ID {
 		return errorPacketIDNotMatch
 	}
 	// this second packet receives the actual result of the authentication
@@ -146,11 +143,10 @@ func (r *RemoteConnection) authenticate() error {
 	if err != nil {
 		return err
 	}
-	packet = r.transform(result)
-	if packet.ID == authFailedID {
+	if result.ID == authFailedID {
 		return errorAuthFailed
 	}
-	if authPacket.ID != packet.ID {
+	if authPacket.ID != result.ID {
 		return errorPacketIDNotMatch
 	}
 	r.authenticated = true
@@ -176,7 +172,7 @@ func (r *RemoteConnection) send(packet *Packet) error {
 // receive the responses from the server or an error. Returned
 // packet contains the data to be able to correlate the ID with
 // the originally sent packet.
-func (r *RemoteConnection) receive() ([]byte, error) {
+func (r *RemoteConnection) receive() (*Packet, error) {
 	reader := bufio.NewReader(r.connection)
 	for {
 		chunk := make([]byte, maximumPacketSize)
@@ -184,12 +180,8 @@ func (r *RemoteConnection) receive() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		return chunk[:num], nil
+		packet := Packet{}
+		packet.Deserialize(chunk[:num])
+		return &packet, nil
 	}
-}
-
-func (r *RemoteConnection) transform(data []byte) *Packet {
-	packet := Packet{}
-	packet.Deserialize(data)
-	return &packet
 }
