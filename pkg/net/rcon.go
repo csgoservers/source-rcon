@@ -91,7 +91,8 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 		}
 		// here we append packet bodies because mirror
 		// packet is not received at this moment.
-		raw.Write(bytes.TrimSpace(result))
+		line := bytes.TrimSpace([]byte(packet.Body))
+		raw.Write(line)
 	}
 }
 
