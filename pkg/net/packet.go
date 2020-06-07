@@ -10,7 +10,7 @@ import (
 
 const (
 	minimumPacketSize int32 = 10
-	maximumPacketSize int32 = 4096 + 10
+	maximumPacketSize int32 = 4096 + minimumPacketSize
 
 	serverDataResponseValue PacketType = 0
 	serverDataExecCommand   PacketType = 2
