@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -33,16 +34,25 @@ type RemoteConnection struct {
 	options       *Options
 	connection    net.Conn
 	authenticated bool
+	mutex         *sync.Mutex
 }
 
 // New creates a new RCON for the given host and port.
 func New(opts *Options) *RemoteConnection {
-	return &RemoteConnection{options: opts}
+	return &RemoteConnection{
+		options: opts,
+		mutex:   &sync.Mutex{},
+	}
 }
 
-// ExecCommand sends a command to the server. When this command is executed it check
-// if the connection is authenticated or needs to be authenticated.
+// ExecCommand sends a command to the server. When this command is executed it will check
+// if the connection is authenticated or needs to be authenticated. Note that this method
+// makes exclusive use of the underlying connection to make it safe to use in a
+// multi routine scenario.
 func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	// initialize connection to the server if needed
 	if r.connection == nil {
 		err := r.initialize()
 		if err != nil {
@@ -96,6 +106,8 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 
 // Close closes the server connection
 func (r *RemoteConnection) Close() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	err := r.connection.Close()
 	if err != nil {
 		return err
