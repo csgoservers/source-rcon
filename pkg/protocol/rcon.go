@@ -108,6 +108,9 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 func (r *RemoteConnection) Close() error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+	if r.connection == nil {
+		return nil
+	}
 	err := r.connection.Close()
 	if err != nil {
 		return err
