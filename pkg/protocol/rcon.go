@@ -68,9 +68,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	// we send the given command but first we create a packet to
-	// be sent.
-	packet := NewPacket(serverDataExecCommand, cmd)
+	packet := newPacket(serverDataExecCommand, cmd)
 	err := r.send(packet)
 	if err != nil {
 		return nil, err
@@ -78,7 +76,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	// In order to support multiple packet responses for large packets
 	// we use a workaround described in the official protocol documentation.
 	// https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses
-	mirrorPacket := NewPacket(serverDataResponseValue, "")
+	mirrorPacket := newPacket(serverDataResponseValue, "")
 	err = r.send(mirrorPacket)
 	if err != nil {
 		return nil, err
@@ -139,7 +137,7 @@ func (r *RemoteConnection) initialize() error {
 // is returned in the packet id field. If the ID is equals to -1 then the
 // authentication failed.
 func (r *RemoteConnection) authenticate() error {
-	authPacket := NewPacket(serverDataAuth, r.options.Password)
+	authPacket := newPacket(serverDataAuth, r.options.Password)
 	err := r.send(authPacket)
 
 	// here we expect an empty response form the server. ID from
@@ -171,12 +169,12 @@ func (r *RemoteConnection) authenticate() error {
 // send the given packge after validate it. Note that
 // this packet is serialized into a byte array and
 // sent using the given connection.
-func (r *RemoteConnection) send(packet *Packet) error {
-	err := packet.Validate()
+func (r *RemoteConnection) send(packet *packet) error {
+	err := packet.validate()
 	if err != nil {
 		return err
 	}
-	content, err := packet.Serialize()
+	content, err := packet.serialize()
 	if err != nil {
 		return err
 	}
@@ -187,7 +185,7 @@ func (r *RemoteConnection) send(packet *Packet) error {
 // receive the responses from the server or an error. Returned
 // packet contains the data to be able to correlate the ID with
 // the originally sent packet.
-func (r *RemoteConnection) receive() (*Packet, error) {
+func (r *RemoteConnection) receive() (*packet, error) {
 	reader := bufio.NewReader(r.connection)
 	for {
 		chunk := make([]byte, maximumPacketSize)
@@ -195,8 +193,8 @@ func (r *RemoteConnection) receive() (*Packet, error) {
 		if err != nil {
 			return nil, err
 		}
-		packet := Packet{}
-		packet.Deserialize(chunk[:num])
+		packet := packet{}
+		packet.deserialize(chunk[:num])
 		return &packet, nil
 	}
 }
