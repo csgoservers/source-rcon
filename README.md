@@ -1,6 +1,9 @@
 # Source `RCON` Protocol
 
->This project is a work in progress.
+![GitHub repo size](https://img.shields.io/github/repo-size/csgoservers/source-rcon?logo=github&style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/csgoservers/source-rcon?logo=github&style=for-the-badge)
+
+>See [license](LICENSE) if you plan to run this software. If you have any doubt [contact us](mailto:hi@csgoservers.xyz).
 
 The Source `RCON` Protocol is a `TCP/IP` based communication protocol used by [Source Dedicated Server](https://developer.valvesoftware.com/wiki/Source_Dedicated_Server), which allows console commands to be issued to the server via a remote console.
 
@@ -36,3 +39,13 @@ $ ./rcon-cli -H 1.2.3.4 -p 27025 -s 1234 -c cvarlist
 ## Test
 
 If you want to execute all tests from this repository then execute `make test`.
+
+## Important note
+
+This is not an official Steam product. csgoservers.xyz is not affiliated with Valve Corporation or Counter-Strike
+
+## License
+
+See [LICENSE](LICENSE)
+
+[![License](https://img.shields.io/badge/License-AGPLv3%202.0-brightgreen.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0.txt)
