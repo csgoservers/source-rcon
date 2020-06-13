@@ -19,6 +19,8 @@ If you want to use this protocol implementation in your own projects, you only n
 $ go get -u github.com/csgoservers/source-rcon/pkg/protocol
 ```
 
+#### CLI
+
 Also, if you only want to execute some commands over a *Source Dedicated Servers*, then you can execute the `rcon-cli` application. To use it you just need to clone this repository and execute the `make build` directive. You can change some flags to configure your server settings. See the table below:
 
 | Name 	| Default value 	| Description                                           	|
