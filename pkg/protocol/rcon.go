@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-const authFailedID int32 = -1
+const (
+	authFailedID    int32  = -1
+	emptyPacketBody string = ""
+)
 
 var (
 	errorPacketIDNotMatch = errors.New("packet ID doesn't match for authentication")
@@ -76,7 +79,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	// In order to support multiple packet responses for large packets
 	// we use a workaround described in the official protocol documentation.
 	// https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses
-	mirrorPacket := newPacket(serverDataResponseValue, "")
+	mirrorPacket := newPacket(serverDataResponseValue, emptyPacketBody)
 	err = r.send(mirrorPacket)
 	if err != nil {
 		return nil, err
