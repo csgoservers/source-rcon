@@ -42,11 +42,9 @@ $ ./rcon-cli -H 1.2.3.4 -p 27025 -s 1234 -c cvarlist
 
 If you want to execute all tests from this repository then execute `make test`.
 
-## Important note
-
-This is not an official Steam product. csgoservers.xyz is not affiliated with Valve Corporation or Counter-Strike
-
 ## License
+
+>This is not an official Steam product. csgoservers.xyz is not affiliated with Valve Corporation or Counter-Strike
 
 See [LICENSE](LICENSE)
 
