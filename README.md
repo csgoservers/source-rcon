@@ -19,6 +19,30 @@ If you want to use this protocol implementation in your own projects, you only n
 $ go get -u github.com/csgoservers/source-rcon/pkg/protocol
 ```
 
+To use in your code, you first need to specify the connection details like *host*, *port* and *server password*. Then you can create the connection and send commands over it. See next block to use as a template:
+
+```go
+import rcon "github.com/csgoservers/source-rcon/pkg/protocol"
+
+func main() {
+  opts := &rcon.Options{
+	Host:     "127.0.0.1",
+	Port:     27025,
+	Password: "1234",
+  }
+  conn := rcon.New(opts)
+  defer conn.Close()
+
+  result, err := conn.ExecCommand("cvarlist")
+  if err != nil {
+	return
+  }
+  // transform `result` to a string
+}
+```
+
+If you have any issue, please send it [here](https://github.com/csgoservers/source-rcon/issues).
+
 #### CLI
 
 Also, if you only want to execute some commands over a *Source Dedicated Servers*, then you can execute the `rcon-cli` application. To use it you just need to clone this repository and execute the `make build` directive. You can change some flags to configure your server settings. See the table below:
