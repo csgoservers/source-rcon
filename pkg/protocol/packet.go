@@ -30,8 +30,8 @@ type packet struct {
 }
 
 // newPacket creates a default packet
-func newPacket(t packetType, body string) *packet {
-	return &packet{
+func newPacket(t packetType, body string) packet {
+	return packet{
 		ID:   rand.Int31(),
 		Type: t,
 		Body: body,

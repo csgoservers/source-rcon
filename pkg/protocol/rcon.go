@@ -30,18 +30,14 @@ type Options struct {
 
 // RemoteConnection to a Source server
 type RemoteConnection struct {
-	options       *Options
-	connection    net.Conn
-	authenticated bool
-	mutex         *sync.Mutex
+	options    *Options
+	connection net.Conn
+	sync.Mutex
 }
 
 // New creates a new RCON for the given host and port.
 func New(opts *Options) *RemoteConnection {
-	return &RemoteConnection{
-		options: opts,
-		mutex:   &sync.Mutex{},
-	}
+	return &RemoteConnection{options: opts}
 }
 
 // ExecCommand sends a command to the server. When this command is executed it will check
@@ -49,8 +45,8 @@ func New(opts *Options) *RemoteConnection {
 // makes exclusive use of the underlying connection to make it safe to use in a
 // multi routine scenario.
 func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	// initialize connection to the server if needed
 	if r.connection == nil {
 		err := r.initialize()
@@ -58,10 +54,8 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	// first check if is not authenticated and connection options
-	// contains a password to try to authenticate the connection to
-	// the server.
-	if !r.authenticated && len(r.options.Password) > 0 {
+	// Always send the authentication to the game server when password is not empty
+	if len(r.options.Password) > 0 {
 		err := r.authenticate()
 		if err != nil {
 			return nil, err
@@ -86,7 +80,7 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 	// we break the loop and return the result.
 	var raw bytes.Buffer
 	for {
-		packet, err = r.receive()
+		packet, err := r.receive()
 		if err != nil {
 			return nil, err
 		}
@@ -103,8 +97,8 @@ func (r *RemoteConnection) ExecCommand(cmd string) ([]byte, error) {
 
 // Close closes the server connection
 func (r *RemoteConnection) Close() error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	if r.connection == nil {
 		return nil
 	}
@@ -112,7 +106,6 @@ func (r *RemoteConnection) Close() error {
 	if err != nil {
 		return err
 	}
-	r.authenticated = false
 	r.connection = nil
 	return nil
 }
@@ -161,19 +154,18 @@ func (r *RemoteConnection) authenticate() error {
 	if authPacket.ID != result.ID {
 		return errorPacketIDNotMatch
 	}
-	r.authenticated = true
 	return nil
 }
 
 // send the given packge after validate it. Note that
 // this packet is serialized into a byte array and
 // sent using the given connection.
-func (r *RemoteConnection) send(packet *packet) error {
-	err := packet.validate()
+func (r *RemoteConnection) send(data packet) error {
+	err := data.validate()
 	if err != nil {
 		return err
 	}
-	content, err := packet.serialize()
+	content, err := data.serialize()
 	if err != nil {
 		return err
 	}
@@ -184,16 +176,16 @@ func (r *RemoteConnection) send(packet *packet) error {
 // receive the responses from the server or an error. Returned
 // packet contains the data to be able to correlate the ID with
 // the originally sent packet.
-func (r *RemoteConnection) receive() (*packet, error) {
+func (r *RemoteConnection) receive() (packet, error) {
 	reader := bufio.NewReader(r.connection)
 	for {
 		chunk := make([]byte, maximumPacketSize)
 		num, err := reader.Read(chunk)
 		if err != nil {
-			return nil, err
+			return packet{}, err
 		}
 		packet := packet{}
 		packet.deserialize(chunk[:num])
-		return &packet, nil
+		return packet, nil
 	}
 }
