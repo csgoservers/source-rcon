@@ -131,30 +131,31 @@ func (r *RemoteConnection) initialize() error {
 func (r *RemoteConnection) authenticate() error {
 	authPacket := newPacket(serverDataAuth, r.options.Password)
 	err := r.send(authPacket)
-
-	// here we expect an empty response form the server. ID from
-	// auth request packet mus be the same that this first one.
-	result, err := r.receive()
 	if err != nil {
 		return err
 	}
-	if authPacket.ID != result.ID {
-		return errorPacketIDNotMatch
+	for {
+		result, err := r.receive()
+		if err != nil {
+			return err
+		}
+		// here we expect an empty response from the server. ID from
+		// auth request packet mus be the same that this first one and response type
+		// must be of type 0.
+		if result.ID == authPacket.ID && result.Type == serverDataResponseValue {
+			continue
+		}
+		// this second packet receives the actual result of the authentication
+		// process. ID must be the same as the original auth packet. If packet
+		// ID is -1 then authentication failed.
+		if result.ID == authFailedID {
+			return errorAuthFailed
+		}
+		if authPacket.ID != result.ID {
+			return errorPacketIDNotMatch
+		}
+		return nil
 	}
-	// this second packet receives the actual result of the authentication
-	// process. ID must be the same as the original auth packet. If packet
-	// ID is -1 then authentication failed.
-	result, err = r.receive()
-	if err != nil {
-		return err
-	}
-	if result.ID == authFailedID {
-		return errorAuthFailed
-	}
-	if authPacket.ID != result.ID {
-		return errorPacketIDNotMatch
-	}
-	return nil
 }
 
 // send the given packge after validate it. Note that
