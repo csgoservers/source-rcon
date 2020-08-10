@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -26,10 +26,6 @@ type Options struct {
 	Password string
 	Port     int
 	Timeout  time.Time
-}
-
-func (o *Options) url() string {
-	return fmt.Sprintf("%s:%d", o.Host, o.Port)
 }
 
 // RemoteConnection to a Source server
@@ -123,7 +119,7 @@ func (r *RemoteConnection) Close() error {
 
 // initialize is the method to setup connection with the server
 func (r *RemoteConnection) initialize() error {
-	host := r.options.url()
+	host := net.JoinHostPort(r.options.Host, strconv.Itoa(r.options.Port))
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
 		return err
