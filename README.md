@@ -19,7 +19,7 @@ If you want to use this protocol implementation in your own projects, you only n
 $ go get -u github.com/csgoservers/source-rcon/pkg/protocol
 ```
 
-To use in your code, you first need to specify the connection details like *host*, *port* and *server password*. Then you can create the connection and send commands over it. See next block to use as a template:
+To use it in your code, you first need to specify the connection details like *host*, *port* and *server password*. Then you can create the connection and send commands over it. See the next block to use as a template:
 
 ```go
 import rcon "github.com/csgoservers/source-rcon/pkg/protocol"
